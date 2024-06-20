@@ -10,7 +10,7 @@ LOG_FILE_PATH = os.path.join(LOG_DIR, 'application.log')
 os.makedirs(LOG_DIR, exist_ok=True)
 
 time_format = "%Y-%m-%d %H:%M:%S"
-FORMATTER = logging.Formatter(fmt='%(asctime)s — %(name)s — %(levelname)s — %(message)s', datefmt=time_format)
+FORMATTER = logging.Formatter(fmt='%(asctime)s — %(name)s — %(lineno)d — %(levelname)s — %(message)s', datefmt=time_format)
 
 
 def get_console_handler():

@@ -1,6 +1,6 @@
 import os.path
 
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -8,7 +8,6 @@ from googleapiclient.discovery import build
 
 from logger import get_logger
 
-load_dotenv()
 
 logger = get_logger(os.path.basename(__file__))
 
@@ -53,7 +52,7 @@ class GoogleSheetsManager:
         }
         self.sheet.values().append(
             spreadsheetId=self.spreadsheet_id, range=range_name,
-            valueInputOption='RAW', insertDataOption='INSERT_ROWS', body=body).execute()
+            valueInputOption='USER_ENTERED', insertDataOption='OVERWRITE', body=body).execute()
         logger.debug("New row has been added to the table")
 
     def get_users_data(self):
@@ -69,11 +68,11 @@ class GoogleSheetsManager:
     def add_new_user(self, user):
         logger.debug("Adding a new user")
         self.append_to_last_empty_row(self.default_range_name, [
-            [user.username, user.elo, user.calibration],
+            [user.username, user.elo, user.calibration, user.matches_played, user.matches_won, user.tournaments_played],
         ])
         logger.debug("User added successfully")
 
-    def update_elo_by_username(self, user):
+    def update_user_by_username(self, user):
         logger.debug(f'Updating ELO for {user.username}. New ELO - {user.elo}')
         values = self.get_users_data()
         len = 2
@@ -81,5 +80,7 @@ class GoogleSheetsManager:
             if row[0] == user.username:
                 break
             len += 1
-        self.write_data(f"Sheet1!B{len}:C{len}", [user.elo, user.calibration])
+        self.write_data(f"{os.getenv('SHEET_LIST')}!B{len}:F{len}", [user.elo, user.calibration,
+                                                                     user.matches_played, user.matches_won,
+                                                                     user.tournaments_played])
         logger.debug(f'ELO has been successfully changed. Row number - {len}')

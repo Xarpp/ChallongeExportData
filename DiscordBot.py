@@ -3,11 +3,11 @@ import os
 import requests
 import json
 
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 
 from logger import get_logger
 
-load_dotenv()
+load_dotenv(find_dotenv(), verbose=True, override=True)
 
 logger = get_logger(os.path.basename(__file__))
 
