@@ -1,5 +1,6 @@
 .env
 .idea
+images
 __pycache__
 logs
 venv
