@@ -175,11 +175,17 @@ def process_matches(current_matches):
 
                 logger.debug(f"New match has started. ID: {match['id']}. Player1: {player1.username}. "
                              f"Player2: {player2.username}")
+                message = {
+                    "title": "🏆 New Match Upcoming",
+                    "description": f"{player1.username} ({player1.elo} TRP) vs {player2.username} ({player2.elo} TRP)",
+                    "footer": {
+                        "text": "📈 ELO Predictions\n"
+                                f"- {player1.username}: +{player1.r_win} (W) / {player1.r_lose} (L)\n"
+                                f"- {player2.username}: +{player2.r_win} (W) / {player2.r_lose} (L)",
+                    }
+                }
 
-                discord_sender(
-                    f"🌝 New Match: {player1.username} ({player1.elo}) vs {player2.username} ({player2.elo})\n\n"
-                    f"{player1.username} (+{player1.r_win} / {player1.r_lose})\n"
-                    f"{player2.username} (+{player2.r_win} / {player2.r_lose})")
+                discord_sender(message)
 
                 sent_messages[match['id']] = 'open'
         elif match['state'] == 'complete':
@@ -192,13 +198,13 @@ def process_matches(current_matches):
                 message = "🌚 Closed match: "
 
                 if players[0].winner:
-                    message += (
-                        f"✅ {players[0].username} ({players[0].elo}) vs {players[1].username} ({players[1].elo})"
-                        f" | +{players[0].r_win} / {players[1].r_lose}")
+                    description = f"(W) {players[0].username} ({players[0].elo} TRP)  vs {players[1].username} ({players[1].elo} TRP)"
                 else:
-                    message += (
-                        f"{players[0].username} ({players[0].elo}) vs ✅ {players[1].username} ({players[1].elo})"
-                        f" | {players[0].r_lose} / +{players[1].r_win}")
+                    description = f"{players[0].username} ({players[0].elo} TRP)  vs (W) {players[1].username} ({players[1].elo} TRP)"
+                message = {
+                    "title": "🏁 Finished match",
+                    "description": description,
+                }
 
                 discord_sender(message)
                 sent_messages[match['id']] = 'complete'
@@ -224,9 +230,15 @@ def start_polling(tournament_url):
             parse_users_from_sheets()
             check_users_in_sheet(challonge.participants.index(tournamentID))
 
-            message = "✨Tournament lineup:\n\n"
+            users_mess_list = ""
+
             for user in users_list:
-                message += f"{user.username} ({user.elo})\n"
+                users_mess_list += f"{user.username} ({user.elo} TRP)\n"
+
+            message = {
+                "title": "📋 Tournament lineup: ",
+                "description": users_mess_list,
+            }
 
             discord_sender(message)
 
@@ -237,9 +249,14 @@ def start_polling(tournament_url):
                 sleep(2)
 
             logger.debug(f"The tournament is over. ID: {tournamentID}")
-            message = "👽 Tournament is over. Updated rating: \n\n"
+            users_mess_list = ""
             for user in users_list:
-                message += f"{user.username} ({user.elo}) | {'+' if user.rating_sum > 0 else ''}{user.rating_sum}\n"
+                users_mess_list += f"{user.username} ({user.elo} TRP)\n"
+
+            message = {
+                "title": "📋 Tournament is over! Updated rating:",
+                "description": users_mess_list,
+            }
 
             discord_sender(message)
 

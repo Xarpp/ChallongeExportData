@@ -16,10 +16,11 @@ logger.debug("Starting discord sender application")
 
 
 def send_message(message):
-    payload = {
-        'content': message
+    message['color'] = os.getenv("EMBEDS_COLOR")
+    mess = {
+        'embeds': [message]
     }
-    response = requests.post(webhook_url, data=json.dumps(payload), headers={'Content-Type': 'application/json'})
+    response = requests.post(webhook_url, data=json.dumps(mess), headers={'Content-Type': 'application/json'})
     if response.status_code != 204:
-        error_message = f'Request to webhook returned an error {response.status_code}, the response is:\n{response.text}'
+        error_message = f'Request to webhook returned an error {response.status_code},the response is:\n{response.text}'
         raise ValueError(error_message)
