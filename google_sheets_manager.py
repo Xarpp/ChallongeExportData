@@ -1,13 +1,13 @@
 import os.path
 
 from dotenv import load_dotenv, find_dotenv
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
+from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 
 from logger import get_logger
 
+load_dotenv(find_dotenv(), verbose=True, override=True)
 
 logger = get_logger(os.path.basename(__file__))
 
@@ -16,26 +16,29 @@ class GoogleSheetsManager:
     SCOPES = [os.getenv('SCOPES')]
 
     def __init__(self, spreadsheet_id, default_range_name):
-        logger.debug("Initialization GoogleSheetsManager")
-        if os.path.exists('token.json'):
-            logger.debug("Token file already exists")
-            self.creds = Credentials.from_authorized_user_file('token.json', self.SCOPES)
-        if not self.creds or not self.creds.valid:
-            logger.debug("Token file is incorrect or corrupted. Trying to refresh")
-            if self.creds and self.creds.expired and self.creds.refresh_token:
-                self.creds.refresh(Request())
-            else:
-                logger.debug("Creating token file")
-                flow = InstalledAppFlow.from_client_secrets_file('credentials.json', self.SCOPES)
-                self.creds = flow.run_local_server(port=0)
-            with open('token.json', 'w') as token:
-                token.write(self.creds.to_json())
-        self.service = build('sheets', 'v4', credentials=self.creds)
         self.spreadsheet_id = spreadsheet_id
-        self.sheet = self.service.spreadsheets()
         self.default_range_name = default_range_name
+        self.sheet = None
+        self.service = None
 
-        logger.debug("Connection to Google Sheets was successful")
+        service_account_files = [os.getenv('SHEET_SERVICE_ACCOUNT_FILE'),
+                                 os.getenv('SHEET_SERVICE_ACCOUNT_FILE_RESERVE')]
+
+        for file in service_account_files:
+            try:
+                logger.debug(f"Attempting connection with {file}")
+                creds = Credentials.from_service_account_file(file,
+                                                              scopes=self.SCOPES)
+                self.service = build('sheets', 'v4', credentials=creds)
+                self.sheet = self.service.spreadsheets()
+                logger.debug("Connection to Google Sheets was successful")
+                break
+            except HttpError as error:
+                logger.error(f'An error occurred with {file}: {error}')
+                continue
+
+        if self.service is None:
+            logger.critical("Failed to connect to any service account")
 
     def write_data(self, range_name, values):
         body = {

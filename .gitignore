@@ -4,5 +4,4 @@ images
 __pycache__
 logs
 venv
-credentials.json
-token.json
+service_account_files

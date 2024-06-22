@@ -1,9 +1,9 @@
 from time import sleep
-from DiscordBot import *
+from discord_bot import *
 import argparse
 import challonge
-from GoogleSheetsManager import *
-from Users import *
+from google_sheets_manager import *
+from users import *
 import os
 from dotenv import load_dotenv, find_dotenv
 
