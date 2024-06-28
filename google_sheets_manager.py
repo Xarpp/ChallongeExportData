@@ -9,7 +9,7 @@ from logger import get_logger
 
 load_dotenv(find_dotenv(), verbose=True, override=True)
 
-logger = get_logger(os.path.basename(__file__))
+loggerSheet = get_logger(os.path.basename(__file__))
 
 
 class GoogleSheetsManager:
@@ -26,19 +26,19 @@ class GoogleSheetsManager:
 
         for file in service_account_files:
             try:
-                logger.debug(f"Attempting connection with {file}")
+                loggerSheet.info(f"Attempting connection with {file}")
                 creds = Credentials.from_service_account_file(file,
                                                               scopes=self.SCOPES)
                 self.service = build('sheets', 'v4', credentials=creds)
                 self.sheet = self.service.spreadsheets()
-                logger.debug("Connection to Google Sheets was successful")
+                loggerSheet.info("Connection to Google Sheets was successful")
                 break
             except HttpError as error:
-                logger.error(f'An error occurred with {file}: {error}')
+                loggerSheet.error(f'An error occurred with {file}: {error}')
                 continue
 
         if self.service is None:
-            logger.critical("Failed to connect to any service account")
+            loggerSheet.critical("Failed to connect to any service account")
 
     def write_data(self, range_name, values):
         body = {
@@ -47,7 +47,7 @@ class GoogleSheetsManager:
         result = self.sheet.values().update(
             spreadsheetId=self.spreadsheet_id, range=range_name,
             valueInputOption='USER_ENTERED', body=body).execute()
-        logger.debug(f'Writing data. Range - {range_name}. {result.get("updatedCells")} cells updated')
+        loggerSheet.debug(f'Writing data. Range - {range_name}. {result.get("updatedCells")} cells updated')
 
     def append_to_last_empty_row(self, range_name, values):
         body = {
@@ -56,27 +56,27 @@ class GoogleSheetsManager:
         self.sheet.values().append(
             spreadsheetId=self.spreadsheet_id, range=range_name,
             valueInputOption='USER_ENTERED', insertDataOption='OVERWRITE', body=body).execute()
-        logger.debug("New row has been added to the table")
+        loggerSheet.debug("New row has been added to the table")
 
     def get_users_data(self):
-        logger.debug("Getting user data")
+        loggerSheet.debug("Getting user data")
         result = self.sheet.values().get(spreadsheetId=self.spreadsheet_id, range=self.default_range_name).execute()
         values = result.get('values', [])
         if not values:
-            logger.debug("No data found")
+            loggerSheet.debug("No data found")
         else:
-            logger.debug("Data received successfully ")
+            loggerSheet.debug("Data received successfully ")
             return values
 
     def add_new_user(self, user):
-        logger.debug("Adding a new user")
+        loggerSheet.debug("Adding a new user")
         self.append_to_last_empty_row(self.default_range_name, [
             [user.username, user.elo, user.calibration, user.matches_played, user.matches_won, user.tournaments_played],
         ])
-        logger.debug("User added successfully")
+        loggerSheet.debug("User added successfully")
 
     def update_user_by_username(self, user):
-        logger.debug(f'Updating ELO for {user.username}. New ELO - {user.elo}')
+        loggerSheet.info(f'Updating ELO for {user.username}. New ELO - {user.elo}')
         values = self.get_users_data()
         len = 2
         for row in values:
@@ -86,4 +86,4 @@ class GoogleSheetsManager:
         self.write_data(f"{os.getenv('SHEET_LIST')}!B{len}:F{len}", [user.elo, user.calibration,
                                                                      user.matches_played, user.matches_won,
                                                                      user.tournaments_played])
-        logger.debug(f'ELO has been successfully changed. Row number - {len}')
+        loggerSheet.debug(f'ELO has been successfully changed. Row number - {len}')
