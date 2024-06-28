@@ -145,11 +145,11 @@ class Tournament:
         SA2 = 1 if player2.id == match['winner_id'] else 0
         EA2 = 1 / (1 + pow(10, (player1.elo - player2.elo) / 400))
 
-        rating_changes1 = int(K1 * (SA1 - EA1))
-        rating_changes2 = int(K2 * (SA2 - EA2))
-
-        player1.elo += rating_changes1
-        player2.elo += rating_changes2
+        # rating_changes1 = int(K1 * (SA1 - EA1))
+        # rating_changes2 = int(K2 * (SA2 - EA2))
+        #
+        # player1.elo += rating_changes1
+        # player2.elo += rating_changes2
 
         if SA1 > 0:
             player1.winner = True
@@ -179,11 +179,11 @@ class Tournament:
         SA2 = 1 if team2.id == match['winner_id'] else 0
         EA2 = 1 / (1 + pow(10, (team1.elo - team2.elo) / 400))
 
-        rating_changes1 = int(K1 * (SA1 - EA1))
-        rating_changes2 = int(K2 * (SA2 - EA2))
-
-        team1.elo += rating_changes1
-        team2.elo += rating_changes2
+        # rating_changes1 = int(K1 * (SA1 - EA1))
+        # rating_changes2 = int(K2 * (SA2 - EA2))
+        #
+        # team1.elo += rating_changes1
+        # team2.elo += rating_changes2
 
         if SA1 > 0:
             team1.winner = True
