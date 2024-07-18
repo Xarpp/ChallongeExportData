@@ -69,7 +69,7 @@ class Tournament:
                 self.googleSheetsManager.add_new_user(new_user)
                 self.users_list.append(new_user)
                 loggerTour.debug(f'Created new user. Username - {new_user.username}. ELO - {new_user.elo}. '
-                                  f'Calibration - {new_user.calibration}')
+                                 f'Calibration - {new_user.calibration}')
             else:
                 existing_user.id = participant['id']
                 existing_user.tournaments_played += 1
@@ -99,25 +99,6 @@ class Tournament:
                             loggerTour.debug(f'User {existing_user.username} already exists.')
                     self.team_list.append(team)
 
-    # def change_solo_elo_in_sheets(self, players):
-    #     loggerTour.debug("Updating ELO for players")
-    #     for player in players:
-    #         player.calibration -= 1 if player.calibration > 0 else 0
-    #         player.matches_played += 1
-    #         player.matches_won += 1 if player.winner else 0
-    #         player.elo += player.r_win if player.winner else player.r_lose
-    #         self.googleSheetsManager.update_user_by_username(player)
-
-    # def change_team_elo_in_sheets(self, teams):
-    #     loggerTour.debug("Updating ELO for teams")
-    #     for team in teams:
-    #         for player in team.teammates:
-    #             player.calibration -= 1 if player.calibration > 0 else 0
-    #             player.matches_played += 1
-    #             player.matches_won += 1 if team.winner else 0
-    #             player.elo += team.r_win if team.winner else team.r_lose
-    #             self.googleSheetsManager.update_user_by_username(player)
-
     def change_elo_in_sheets(self, player):
         loggerTour.debug("Updating ELO for players")
         player.calibration -= 1 if player.calibration > 0 else 0
@@ -144,12 +125,6 @@ class Tournament:
 
         SA2 = 1 if player2.id == match['winner_id'] else 0
         EA2 = 1 / (1 + pow(10, (player1.elo - player2.elo) / 400))
-
-        # rating_changes1 = int(K1 * (SA1 - EA1))
-        # rating_changes2 = int(K2 * (SA2 - EA2))
-        #
-        # player1.elo += rating_changes1
-        # player2.elo += rating_changes2
 
         if SA1 > 0:
             player1.winner = True
@@ -179,11 +154,11 @@ class Tournament:
         SA2 = 1 if team2.id == match['winner_id'] else 0
         EA2 = 1 / (1 + pow(10, (team1.elo - team2.elo) / 400))
 
-        # rating_changes1 = int(K1 * (SA1 - EA1))
-        # rating_changes2 = int(K2 * (SA2 - EA2))
-        #
-        # team1.elo += rating_changes1
-        # team2.elo += rating_changes2
+        rating_changes1 = int(K1 * (SA1 - EA1))
+        rating_changes2 = int(K2 * (SA2 - EA2))
+
+        team1.elo += rating_changes1
+        team2.elo += rating_changes2
 
         if SA1 > 0:
             team1.winner = True
@@ -201,6 +176,9 @@ class Tournament:
                 player.r_win = team.r_win
                 player.r_lose = team.r_lose
                 self.change_elo_in_sheets(player)
+
+        team1.set_avg_elo()
+        team2.set_avg_elo()
 
         return team1, team2
 
@@ -259,7 +237,7 @@ class Tournament:
         return team1, team2
 
     def process_matches_solo(self, current_matches):
-        loggerTour.debug("Checking new matches")
+        # loggerTour.debug("Checking new matches")
         for match in current_matches:
             if match['id'] not in self.sent_messages:
                 if match['state'] == 'open':
@@ -269,7 +247,7 @@ class Tournament:
                     player2 = players[1]
 
                     loggerTour.info(f"New match has started. ID: {match['id']}. Player1: {player1.username}. "
-                                 f"Player2: {player2.username}")
+                                    f"Player2: {player2.username}")
                     message = {
                         "title": "🏆 New Match Upcoming",
                         "description": f"{player1.username} ({player1.elo} TRP) vs {player2.username} ({player2.elo} TRP)",
@@ -288,7 +266,7 @@ class Tournament:
                     players = self.calculate_solo_match(match)
 
                     loggerTour.info(f"Match is over. ID: {match['id']}. Player1: {players[0].username}. "
-                                      f"Player2: {players[1].username}")
+                                    f"Player2: {players[1].username}")
 
                     if players[0].winner:
                         description = f"(W) {players[0].username} ({players[0].elo} TRP)  vs {players[1].username} ({players[1].elo} TRP)"
@@ -303,7 +281,7 @@ class Tournament:
                     self.sent_messages[match['id']] = 'complete'
 
     def process_matches_team(self, current_matches):
-        loggerTour.debug("Checking new matches")
+        # loggerTour.debug("Checking new matches")
         for match in current_matches:
             if match['id'] not in self.sent_messages:
                 if match['state'] == 'open':
@@ -313,7 +291,7 @@ class Tournament:
                     player2 = players[1]
 
                     loggerTour.info(f"New match has started. ID: {match['id']}. Player1: {player1.username}. "
-                                 f"Player2: {player2.username}")
+                                    f"Player2: {player2.username}")
                     message = {
                         "title": "🏆 New Match Upcoming",
                         "description": f"{player1.username} ({player1.elo} TRP) vs {player2.username} ({player2.elo} TRP)",
@@ -332,7 +310,7 @@ class Tournament:
                     players = self.calculate_team_match(match)
 
                     loggerTour.info(f"Match is over. ID: {match['id']}. Player1: {players[0].username}. "
-                                      f"Player2: {players[1].username}")
+                                    f"Player2: {players[1].username}")
 
                     if players[0].winner:
                         description = f"(W) {players[0].username} ({players[0].elo} TRP)  vs {players[1].username} ({players[1].elo} TRP)"

@@ -15,7 +15,7 @@ from aiogram.types import (
     Message, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove, FSInputFile,
 )
 
-from tournament_start import Tournament
+from tournament_start_v2 import Tournament
 
 load_dotenv(find_dotenv(), verbose=True, override=True)
 
@@ -192,10 +192,11 @@ async def process_finish(message: Message, state: FSMContext) -> None:
     if data['finish'] == "Start":
         await message.answer("You can run a tournament on Challounge", reply_markup=ReplyKeyboardRemove())
         prepare_tournament(data)
-        tournament = Tournament()
         if data['format'] == "1x1":
+            tournament = Tournament(tournament_format=1)
             tournament.initialize_match()
         elif data['format'] == "2x2" or data['format'] == "5x5":
+            tournament = Tournament(tournament_format=2)
             tournament.initialize_match(data["teams"])
     else:
         await message.answer("Start is canceled, to re\-enter send */start\_tournament* again",
